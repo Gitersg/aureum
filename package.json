@@ -1,0 +1,13 @@
+{
+  "name": "aureum",
+  "version": "1.0.0",
+  "description": "A personal capital-class ledger that stays in the browser.",
+  "license": "MIT",
+  "author": "Shrinjoy Ghosh",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test src/ledger.test.mjs"
+  }
+}
