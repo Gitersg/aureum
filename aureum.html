@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aureum</title>
+  <meta name="description" content="Aureum is a personal capital-class ledger. Set a monthly amount, write the paths from S to D, and keep the notes in this browser.">
+  <meta name="theme-color" content="#121614">
+  <meta name="author" content="Shrinjoy Ghosh">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121614'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Georgia' font-size='16' fill='%23d4b072'%3EA%3C/text%3E%3C/svg%3E">
+  <style>
+:root {
+  --sans: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --display: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  --ink: #121614;
+  --ink-2: #1b221e;
+  --panel: #242c27;
+  --line: #3c473f;
+  --cream: #f3efe4;
+  --cream-dim: #cfc6b4;
+  --mute: #8f887c;
+  --gold: #d4b072;
+  --gold-deep: #8a6830;
+  --clay: #c46a4a;
+  --card: 1.15rem;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button, [role="button"], a.btn { cursor: pointer; }
+
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+p { text-wrap: pretty; margin: 0; }
+
+::selection { background: var(--gold); color: var(--ink); }
+
+a { color: var(--gold); }
+
+.shell { min-height: 100vh; }
+
+.top {
+  border-bottom: 1px solid var(--line);
+}
+
+.top-inner, .page, .foot {
+  width: min(64rem, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.top-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+h1 {
+  font-family: var(--display);
+  font-size: 2.5rem;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.lede { margin-top: 0.25rem; max-width: 28rem; color: var(--cream-dim); font-size: 0.95rem; }
+
+.rank-line { color: var(--mute); font-size: 0.95rem; }
+
+.page {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem 0 0;
+}
+
+.stack { display: grid; gap: 1.5rem; min-width: 0; }
+
+.card, .panel {
+  border: 1px solid var(--line);
+  border-radius: var(--card);
+  background: var(--panel);
+}
+
+.card { padding: 1.25rem; }
+.panel { padding: 1rem; }
+
+@media (min-width: 640px) {
+  .card { padding: 1.75rem; }
+}
+
+.display {
+  font-family: var(--display);
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  font-size: 2.4rem;
+  color: var(--gold);
+  overflow-wrap: anywhere;
+}
+
+.per {
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--mute);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.grid-2 {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .grid-2 { grid-template-columns: 8.5rem 1fr; align-items: end; }
+  .amount { font-size: 3rem; }
+}
+
+label { display: block; }
+.lbl { display: block; margin-bottom: 0.4rem; color: var(--mute); font-size: 0.92rem; }
+
+.field {
+  width: 100%;
+  border-radius: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--cream);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.field::placeholder { color: var(--mute); }
+
+.field:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+textarea.field { min-height: 5rem; resize: vertical; }
+textarea.tall { min-height: 8rem; }
+
+.note {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--ink);
+  padding: 0.85rem 1rem;
+  color: var(--cream-dim);
+}
+
+.mark-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+@media (min-width: 640px) {
+  .mark-row { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.btn svg { width: 1rem; height: 1rem; flex: none; }
+
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-gold:hover { background: #e0c28c; }
+
+.btn-ghost { border-color: var(--line); background: transparent; color: var(--cream); }
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.btn.clay { border-color: var(--clay); color: var(--clay); }
+.btn.clay:hover { border-color: var(--clay); color: var(--cream); }
+
+.btn-clay { background: var(--clay); color: var(--cream); }
+
+.btn-quiet {
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--cream-dim);
+  padding: 0.4rem 0.7rem;
+}
+.btn-quiet:hover { color: var(--gold); }
+
+.wide { min-width: 10rem; }
+
+.reached {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--gold);
+  border-radius: var(--card);
+  background: var(--ink-2);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .reached { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+
+.side { min-width: 0; }
+.side-inner { display: grid; gap: 1rem; }
+
+.meter {
+  height: 0.4rem;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ink);
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+}
+
+.ladder { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.ladder li { display: flex; justify-content: space-between; font-size: 0.92rem; }
+.gold { color: var(--gold); }
+.clay { color: var(--clay); }
+.mute { color: var(--mute); }
+.dim { color: var(--cream-dim); }
+.nums { font-variant-numeric: tabular-nums; }
+
+.actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+.confirm {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--ink);
+  padding: 0.75rem;
+}
+.row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.status { margin-top: 0.75rem; font-size: 0.92rem; }
+
+.jumps {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+.jumps .btn { flex: none; }
+
+.section { scroll-margin-top: 1.5rem; padding: 1.25rem; }
+.head { display: flex; gap: 0.75rem; align-items: flex-start; }
+.seal {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--display);
+  font-size: 1.15rem;
+}
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.chip.clay { border-color: var(--clay); color: var(--clay); }
+.creed { display: flex; gap: 0.45rem; margin-top: 0.35rem; color: var(--cream-dim); font-size: 0.92rem; }
+.creed svg { width: 1rem; height: 1rem; margin-top: 0.15rem; flex: none; }
+
+.tier-s {
+  border-color: color-mix(in srgb, var(--gold) 70%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 12%, var(--panel)), var(--panel));
+}
+.tier-a { border-color: color-mix(in srgb, var(--gold) 42%, var(--line)); }
+.tier-d {
+  border-color: color-mix(in srgb, var(--clay) 70%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--clay) 12%, var(--panel)), var(--panel));
+}
+
+.list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+.item, .empty, .composer {
+  border-radius: 1rem;
+  padding: 1rem;
+}
+.item { border: 1px solid var(--line); background: var(--ink-2); }
+.item h3 { font-family: var(--display); font-size: 1.35rem; font-weight: 560; }
+.item p, .empty { margin-top: 0.5rem; color: var(--cream-dim); white-space: pre-wrap; }
+.empty { border: 1px dashed var(--line); color: var(--cream-dim); }
+.composer, .editing { border: 1px solid var(--line); background: var(--ink); }
+.editing { border-color: var(--gold); }
+
+.foot { padding: 2rem 0 4rem; color: var(--mute); font-size: 0.92rem; }
+.foot p + p { margin-top: 0.5rem; }
+.fine a { color: var(--gold); }
+
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .veil { align-items: center; padding: 1.5rem; }
+}
+.veil-bg {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+.dialog {
+  position: relative;
+  width: min(32rem, 100%);
+  max-height: 92vh;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  border-radius: var(--card);
+  background: var(--panel);
+}
+.dialog-body { position: relative; max-height: 92vh; overflow: auto; padding: 2rem 1.5rem; }
+.dialog h2 { margin-top: 0.75rem; font-family: var(--display); font-size: 2.4rem; font-weight: 560; }
+.dialog .sum { margin-top: 1rem; font-family: var(--display); font-size: 1.5rem; color: var(--gold); }
+
+.confetti { pointer-events: none; position: absolute; inset: 0; overflow: hidden; }
+.confetti i {
+  position: absolute;
+  top: -8%;
+  display: block;
+  width: 0.45rem;
+  height: 0.85rem;
+  border-radius: 0.15rem;
+  background: var(--gold);
+  animation: fall 3.6s linear infinite;
+}
+.confetti i:nth-child(odd) { background: var(--cream); height: 0.55rem; }
+.confetti i:nth-child(3n) { background: var(--clay); width: 0.35rem; }
+.confetti i:nth-child(1) { left: 6%; animation-delay: 0s; }
+.confetti i:nth-child(2) { left: 14%; animation-delay: 0.4s; }
+.confetti i:nth-child(3) { left: 22%; animation-delay: 1.1s; }
+.confetti i:nth-child(4) { left: 31%; animation-delay: 0.2s; }
+.confetti i:nth-child(5) { left: 40%; animation-delay: 1.6s; }
+.confetti i:nth-child(6) { left: 48%; animation-delay: 0.7s; }
+.confetti i:nth-child(7) { left: 57%; animation-delay: 1.3s; }
+.confetti i:nth-child(8) { left: 66%; animation-delay: 0.15s; }
+.confetti i:nth-child(9) { left: 74%; animation-delay: 1.8s; }
+.confetti i:nth-child(10) { left: 82%; animation-delay: 0.55s; }
+.confetti i:nth-child(11) { left: 90%; animation-delay: 1.25s; }
+.confetti i:nth-child(12) { left: 96%; animation-delay: 0.9s; }
+
+@keyframes fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(220deg); opacity: 0.15; }
+}
+
+@media (min-width: 1024px) {
+  .page { grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; }
+  .main { grid-column: 1; }
+  .side { grid-column: 2; grid-row: 1 / span 2; }
+  .side-inner { position: sticky; top: 1rem; }
+}
+
+@media (max-width: 639px) {
+  h1 { font-size: 2.15rem; }
+  .dialog h2 { font-size: 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+  .btn { transition: none; }
+}
+
+  </style>
+</head>
+<body>
+  <!--
+    Aureum
+    Copyright (c) 2026 Shrinjoy Ghosh
+    MIT License — https://github.com/Gitersg/aureum
+
+    This file is the application. Open it in a browser.
+    The ledger is stored in localStorage for this file. It is not uploaded.
+  -->
+  <div id="app"></div>
+  <script>
+/* Aureum ledger model
+   Copyright (c) 2026 Shrinjoy Ghosh
+   MIT License. See LICENSE in the repository root.
+*/
+(function (root) {
+  var TIERS = ["S", "A", "B", "C", "D"];
+  var CURRENCIES = ["INR", "USD", "EUR", "GBP"];
+
+  var TIER_META = {
+    S: {
+      name: "S Class",
+      role: "Summit",
+      creed:
+        "The best path. Ownership, yield, and a life that stays intact. This is how the number arrives without you selling your days.",
+      write: "Write the strategy worthy of the summit.",
+    },
+    A: {
+      name: "A Class",
+      role: "Excellent",
+      creed:
+        "High leverage. A rare skill, equity, or a product that can fund the goal and still leave surplus to invest.",
+      write: "Write a path with real leverage.",
+    },
+    B: {
+      name: "B Class",
+      role: "Sound",
+      creed:
+        "Honest compounding. Dignified work that protects your health and steadily feeds the portfolio.",
+      write: "Write a bridge that does not break you.",
+    },
+    C: {
+      name: "C Class",
+      role: "Caution",
+      creed:
+        "The number, barely. Time sold for cash with little left to grow. Useful to see. Poor as a destiny.",
+      write: "Write the option you should not confuse with a future.",
+    },
+    D: {
+      name: "D Class",
+      role: "Fail path",
+      creed:
+        "Self-destruction dressed as earning. Effort that buys the figure by spending health, dignity, and the years ahead.",
+      write: "Name the trap so it cannot pose as a plan.",
+    },
+  };
+
+  var LOCALES = { INR: "en-IN", USD: "en-US", EUR: "de-DE", GBP: "en-GB" };
+
+  function formatMoney(amount, currency) {
+    if (!Number.isFinite(amount)) return "—";
+    var whole = Math.abs(amount % 1) < 0.001;
+    return new Intl.NumberFormat(LOCALES[currency] || "en-US", {
+      style: "currency",
+      currency: currency,
+      maximumFractionDigits: whole ? 0 : 2,
+    }).format(amount);
+  }
+
+  function capitalRequired(monthly, yieldPercent) {
+    if (!Number.isFinite(monthly) || monthly <= 0) return null;
+    if (!Number.isFinite(yieldPercent) || yieldPercent <= 0) return null;
+    return (monthly * 12) / (yieldPercent / 100);
+  }
+
+  function clarityScore(data) {
+    var score = 0;
+    if (data.goal.monthlyAmount > 0) score += 20;
+    if (String(data.goal.intent || "").trim()) score += 8;
+    var counts = {
+      S: data.tiers.S.strategies.length,
+      A: data.tiers.A.strategies.length,
+      B: data.tiers.B.strategies.length,
+      C: data.tiers.C.strategies.length,
+      D: data.tiers.D.strategies.length,
+    };
+    score += Math.min(3, counts.S) * 14;
+    score += Math.min(3, counts.A) * 8;
+    score += Math.min(3, counts.B) * 4;
+    score += Math.min(2, counts.C) * 2;
+    if (counts.D > 0) score += 10;
+    if (counts.S > 0 && counts.D > 0) score += 8;
+    return Math.min(100, score);
+  }
+
+  function rankFor(score) {
+    if (score >= 85) {
+      return { title: "Sovereign", line: "The best path is written, and the worst is named." };
+    }
+    if (score >= 65) {
+      return { title: "Architect", line: "Capital has a shape. Keep refining the summit." };
+    }
+    if (score >= 45) {
+      return { title: "Steward", line: "You are choosing growth over exhaustion." };
+    }
+    if (score >= 25) {
+      return { title: "Apprentice", line: "The ladder is open. Write the next true move." };
+    }
+    return { title: "Seeker", line: "Begin with the amount, then the strategy worthy of it." };
+  }
+
+  function strategyCount(data) {
+    return TIERS.reduce(function (sum, id) {
+      return sum + data.tiers[id].strategies.length;
+    }, 0);
+  }
+
+  function strategy(id, title, body) {
+    var stamp = "2026-01-01T00:00:00.000Z";
+    return { id: id, title: title, body: body, createdAt: stamp, updatedAt: stamp };
+  }
+
+  function seedData() {
+    return {
+      version: 1,
+      goal: {
+        monthlyAmount: 15000,
+        currency: "INR",
+        intent: "Monthly income I want to receive without spending my life",
+        yieldPercent: 10,
+        achieved: false,
+        achievedAt: null,
+        dedication: "Shrinjoy",
+      },
+      tiers: {
+        S: {
+          motto: "The best way. Capital works, and your life stays intact.",
+          strategies: [
+            strategy(
+              "seed-s-portfolio",
+              "A portfolio that pays the month",
+              "Target the monthly figure as dividend and distribution income, not as wages. At about 10% a year, roughly twenty lakh rupees of sound, income-producing capital can carry fifteen thousand a month. The work is to assemble that base with care: quality assets, reinvestment, and protection of principal. You do the thinking. The capital keeps the promise.",
+            ),
+          ],
+        },
+        A: {
+          motto: "Excellent leverage. Build what can fund the summit.",
+          strategies: [
+            strategy(
+              "seed-a-skill",
+              "One rare skill that funds the portfolio",
+              "Become unusually good at work people gladly pay for, then price it so a portion of every month buys assets. The skill is the engine. The portfolio is the destination. This stays A-class while your time is still inside the income — and it moves toward S as the assets begin to pay you back.",
+            ),
+          ],
+        },
+        B: {
+          motto: "Sound, and kind to the future self.",
+          strategies: [
+            strategy(
+              "seed-b-bridge",
+              "Dignified work, automatic surplus",
+              "Hold a stable role that respects your health. Live a little under the cheque. Move a fixed share, every month, into the same ownership plan. This will not feel glamorous. It will not destroy you. It is a bridge with a direction.",
+            ),
+          ],
+        },
+        C: {
+          motto: "Caution. The figure arrives. Growth does not.",
+          strategies: [
+            strategy(
+              "seed-c-ceiling",
+              "Covering the number and nothing else",
+              "A post that pays exactly the monthly figure and leaves no surplus meets the target on paper and starves the future. Write those options here so the ceiling is visible. Use them only as a short bridge, never as the identity of the goal.",
+            ),
+          ],
+        },
+        D: {
+          motto: "The fail path. Name it so it cannot pose as ambition.",
+          strategies: [
+            strategy(
+              "seed-d-exhaustion",
+              "Exhaustion hired to imitate progress",
+              "Scraping the same monthly number through crushing, low-dignity labour — the kind of grind that spends the body to buy cash — is not a capital strategy. Nothing compounds. Health, time, and self-respect are the fee. Record it in D class so it cannot disguise itself as a plan. Refuse it with a clear head.",
+            ),
+          ],
+        },
+      },
+    };
+  }
+
+  function isNonEmptyString(value) {
+    return typeof value === "string" && value.length > 0;
+  }
+
+  function isStrategy(value) {
+    return (
+      value &&
+      typeof value === "object" &&
+      isNonEmptyString(value.id) &&
+      typeof value.title === "string" &&
+      typeof value.body === "string" &&
+      typeof value.createdAt === "string" &&
+      typeof value.updatedAt === "string"
+    );
+  }
+
+  function isTier(value) {
+    return (
+      value &&
+      typeof value === "object" &&
+      typeof value.motto === "string" &&
+      Array.isArray(value.strategies) &&
+      value.strategies.every(isStrategy)
+    );
+  }
+
+  function isAppData(value) {
+    if (!value || value.version !== 1 || !value.goal || !value.tiers) return false;
+    var goal = value.goal;
+    if (!Number.isFinite(goal.monthlyAmount) || goal.monthlyAmount < 0) return false;
+    if (CURRENCIES.indexOf(goal.currency) === -1) return false;
+    if (typeof goal.intent !== "string") return false;
+    if (!Number.isFinite(goal.yieldPercent) || goal.yieldPercent < 0) return false;
+    if (typeof goal.achieved !== "boolean") return false;
+    if (goal.achievedAt !== null && typeof goal.achievedAt !== "string") return false;
+    if (typeof goal.dedication !== "string") return false;
+    for (var i = 0; i < TIERS.length; i++) {
+      if (!isTier(value.tiers[TIERS[i]])) return false;
+    }
+    return true;
+  }
+
+  function parseBackup(input) {
+    var value = input;
+    if (typeof input === "string") {
+      try {
+        value = JSON.parse(input);
+      } catch (err) {
+        return { ok: false };
+      }
+    }
+    if (value && value.state && value.state.data) value = value.state.data;
+    if (!isAppData(value)) return { ok: false };
+    return { ok: true, data: structuredClone(value) };
+  }
+
+  function newId() {
+    if (root.crypto && typeof root.crypto.randomUUID === "function") {
+      return root.crypto.randomUUID();
+    }
+    return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  root.AureumLedger = {
+    TIERS: TIERS,
+    CURRENCIES: CURRENCIES,
+    TIER_META: TIER_META,
+    formatMoney: formatMoney,
+    capitalRequired: capitalRequired,
+    clarityScore: clarityScore,
+    rankFor: rankFor,
+    strategyCount: strategyCount,
+    seedData: seedData,
+    parseBackup: parseBackup,
+    newId: newId,
+  };
+})(typeof globalThis !== "undefined" ? globalThis : this);
+
+/* Aureum studio
+   Copyright (c) 2026 Shrinjoy Ghosh
+   MIT License. See LICENSE in the repository root.
+
+   One page. The ledger is written to localStorage for this browser
+   and this file. Nothing is uploaded.
+*/
+(function () {
+  var L = globalThis.AureumLedger;
+  var KEY = "aureum-capital-classes-v1";
+
+  var data = L.seedData();
+  var storageOk = true;
+  var notice = "";
+  var confirmReset = false;
+  var celebrate = false;
+  var openTier = null;
+  var composer = { title: "", body: "", error: "" };
+  var editingId = null;
+  var editDraft = { title: "", body: "", error: "" };
+  var confirmingId = null;
+  var restoreFocus = false;
+  var numberDraft = { monthly: null, yield: null };
+
+  function esc(value) {
+    return String(value)
+      .replace(/&/g, "\u0026amp;")
+      .replace(/</g, "\u0026lt;")
+      .replace(/>/g, "\u0026gt;")
+      .replace(/"/g, "\u0026quot;");
+  }
+
+  function svg(path) {
+    return (
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      path +
+      "</svg>"
+    );
+  }
+
+  var ICONS = {
+    crown: svg('<path d="M3 17h18"/><path d="M4 17 6.5 8 12 13l5.5-5L20 17"/>'),
+    gem: svg('<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="M12 21 8 9l4-6 4 6z"/>'),
+    compass: svg('<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>'),
+    hourglass: svg('<path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 8s-10 3-10 8"/><path d="M17 3c0 5-10 5-10 8s10 3 10 8"/>'),
+    shield: svg('<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="M12 8v5"/><path d="M12 16h.01"/>'),
+    download: svg('<path d="M12 4v10"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/>'),
+    upload: svg('<path d="M12 16V6"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>'),
+    plus: svg('<path d="M12 5v14M5 12h14"/>'),
+    pencil: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/>'),
+    trash: svg('<path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/>'),
+    check: svg('<path d="m5 12 5 5L20 7"/>'),
+    back: svg('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'),
+  };
+
+  var TIER_ICON = { S: "crown", A: "gem", B: "compass", C: "hourglass", D: "shield" };
+
+  function touch(recipe) {
+    var next = structuredClone(data);
+    recipe(next);
+    data = next;
+    persist();
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ state: { data: data }, version: 0 }));
+      storageOk = true;
+    } catch (err) {
+      storageOk = false;
+    }
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      storageOk = true;
+      if (!raw) {
+        data = L.seedData();
+        persist();
+        return;
+      }
+      var parsed = L.parseBackup(raw);
+      if (!parsed.ok) {
+        data = L.seedData();
+        notice = "What was stored here is not an Aureum ledger. Starter notes are in its place.";
+        persist();
+        return;
+      }
+      data = parsed.data;
+    } catch (err) {
+      storageOk = false;
+      data = L.seedData();
+      notice =
+        "This browser will not keep the ledger. Export a JSON backup before you close the tab.";
+    }
+  }
+
+  function setNotice(text) {
+    notice = text;
+    render();
+  }
+
+  function fieldNumber(bind, numeric) {
+    if (numberDraft[bind] != null) return esc(numberDraft[bind]);
+    return esc(numeric);
+  }
+
+  function view() {
+    var score = L.clarityScore(data);
+    var rank = L.rankFor(score);
+    var total = L.strategyCount(data);
+    var goal = data.goal;
+    var capital = L.capitalRequired(goal.monthlyAmount, goal.yieldPercent);
+    var monthly = L.formatMoney(goal.monthlyAmount, goal.currency);
+    var name = goal.dedication.trim();
+
+    var currencyOptions = L.CURRENCIES.map(function (code) {
+      return '<option value="' + code + '"' + (code === goal.currency ? " selected" : "") + ">" + code + "</option>";
+    }).join("");
+
+    var capitalLine;
+    if (capital == null) {
+      capitalLine = "Set a monthly amount and a yield to see the capital that could carry it.";
+    } else {
+      capitalLine =
+        "At " +
+        esc(goal.yieldPercent) +
+        "% a year, about <strong class=\"nums\">" +
+        esc(L.formatMoney(capital, goal.currency)) +
+        "</strong> of productive capital can carry " +
+        esc(monthly) +
+        " a month. That is an S-class shape: the money works, and the days stay yours.";
+    }
+
+    var ladder = L.TIERS.map(function (tier) {
+      var count = data.tiers[tier].strategies.length;
+      var tone = tier === "D" ? (count ? "clay" : "mute") : count ? "gold" : "mute";
+      return (
+        "<li><span class=\"" +
+        tone +
+        "\">" +
+        tier +
+        " class" +
+        (count ? "" : " · empty") +
+        "</span><span class=\"nums dim\">" +
+        count +
+        "</span></li>"
+      );
+    }).join("");
+
+    var jumps = L.TIERS.map(function (tier) {
+      var cls = tier === "D" ? "btn btn-ghost clay" : "btn btn-ghost";
+      return (
+        '<a class="' +
+        cls +
+        '" href="#tier-' +
+        tier +
+        '">' +
+        tier +
+        ' class <span class="nums mute">' +
+        data.tiers[tier].strategies.length +
+        "</span></a>"
+      );
+    }).join("");
+
+    var sections = L.TIERS.map(renderTier).join("");
+
+    var reached = goal.achieved
+      ? '<div class="reached"><p>This amount is marked reached. The blessing is still here.</p><button type="button" class="btn btn-gold" data-action="read-blessing">Read it again</button></div>'
+      : "";
+
+    var resetBlock = confirmReset
+      ? '<div class="confirm"><p class="dim">Replace everything on this device with the starter notes?</p><div class="row"><button type="button" class="btn btn-clay" data-action="restore">Restore starters</button><button type="button" class="btn btn-ghost" data-action="cancel-reset">Cancel</button></div></div>'
+      : '<button type="button" class="btn btn-ghost" data-action="ask-reset">' + ICONS.back + " Restore starter notes</button>";
+
+    var storageLine = storageOk
+      ? "Saved in this browser, on this device. It is not uploaded."
+      : "This browser did not store the last change.";
+
+    return (
+      '<div class="shell">' +
+      '<header class="top"><div class="top-inner"><div><p class="kicker">Capital classes</p><h1>Aureum</h1><p class="lede">Written with care' +
+      (name ? " for " + esc(name) : "") +
+      ". The summit is S. The fail path is D.</p></div><p class=\"rank-line\">Rank · <span class=\"gold\">" +
+      esc(rank.title) +
+      "</span></p></div></header>" +
+      '<div class="page"><div class="stack main">' +
+      '<section class="card"><p class="kicker">The amount you want</p><h2 class="display" style="font-size:1.85rem;margin-top:0.4rem">Enter the capital you mean to receive.</h2><p class="dim" style="margin-top:0.5rem;max-width:40rem">A monthly figure, kept with care. The classes below are how you get there — from the path that grows you to the one that spends you.</p>' +
+      '<div class="grid-2"><label><span class="lbl">Currency</span><select class="field" data-bind="currency" aria-label="Currency">' +
+      currencyOptions +
+      '</select></label><label><span class="lbl">Monthly amount</span><input class="field nums" data-bind="monthly" inputmode="decimal" aria-label="Monthly amount" autocomplete="off" value="' +
+      fieldNumber("monthly", goal.monthlyAmount) +
+      '"></label></div>' +
+      '<p class="display amount nums">' +
+      esc(monthly) +
+      '<span class="per">each month</span></p>' +
+      '<label style="margin-top:1.5rem"><span class="lbl">What this income is for</span><input class="field" data-bind="intent" maxlength="180" value="' +
+      esc(goal.intent) +
+      '" placeholder="Freedom income, a quieter life, a family kept well"></label>' +
+      '<div class="grid-2"><label><span class="lbl">Yearly yield %</span><input class="field nums" data-bind="yield" inputmode="decimal" aria-label="Assumed yearly yield percent" autocomplete="off" value="' +
+      fieldNumber("yield", goal.yieldPercent) +
+      '"></label><div class="note">' +
+      capitalLine +
+      "</div></div>" +
+      '<label style="margin-top:1.25rem"><span class="lbl">Kept with love for</span><input class="field" data-bind="dedication" maxlength="80" value="' +
+      esc(goal.dedication) +
+      '" placeholder="Your name"></label>' +
+      '<div class="mark-row"><div><p style="font-weight:500">Have you reached this amount?</p><p class="mute" style="font-size:0.92rem">Mark it yourself. Unmark any time — the ledger will not scold you.</p></div><button type="button" class="btn ' +
+      (goal.achieved ? "btn-gold" : "btn-ghost") +
+      ' wide" role="switch" aria-checked="' +
+      goal.achieved +
+      '" data-action="toggle-achieved">' +
+      ICONS.check +
+      (goal.achieved ? " Reached" : " Not yet") +
+      "</button></div></section>" +
+      reached +
+      "</div>" +
+      '<aside class="side"><div class="side-inner"><section class="panel"><p class="kicker">Path rank</p><p class="display" style="font-size:1.9rem;margin-top:0.4rem">' +
+      esc(rank.title) +
+      '</p><p class="dim" style="margin-top:0.25rem">' +
+      esc(rank.line) +
+      '</p><div class="meter" aria-hidden="true"><span style="width:' +
+      score +
+      '%"></span></div><p class="mute nums" style="margin-top:0.5rem;font-size:0.92rem">Clarity ' +
+      score +
+      " · " +
+      total +
+      ' strategies</p><ul class="ladder">' +
+      ladder +
+      "</ul></section>" +
+      '<section class="panel"><p class="kicker">On this device</p><p class="dim" style="margin-top:0.5rem;font-size:0.92rem">' +
+      esc(storageLine) +
+      " Export JSON if you want a copy you can move.</p>" +
+      '<div class="actions"><button type="button" class="btn btn-gold" data-action="export">' +
+      ICONS.download +
+      ' Export JSON</button><button type="button" class="btn btn-ghost" data-action="pick-import">' +
+      ICONS.upload +
+      ' Import JSON</button><input id="import-file" class="sr" type="file" accept="application/json,.json">' +
+      resetBlock +
+      "</div>" +
+      (notice ? '<p class="status" role="status">' + esc(notice) + "</p>" : "") +
+      "</section></div></aside>" +
+      '<div class="stack main"><nav class="jumps" aria-label="Strategy classes">' +
+      jumps +
+      '</nav><p class="mute" style="font-size:0.92rem">Five rooms, kept apart. Starter notes sit in each one — edit or remove any line. Everything stays in this browser until you export a backup.</p>' +
+      sections +
+      "</div></div>" +
+      '<footer class="foot"><p>Aureum keeps this path locally, with love. S class is the life you are building. D class is the life you refuse.</p><p class="fine">Copyright © 2026 Shrinjoy Ghosh. Released under the MIT License.</p></footer>' +
+      (celebrate ? blessing(monthly) : "") +
+      "</div>"
+    );
+  }
+
+  function renderTier(tier) {
+    var meta = L.TIER_META[tier];
+    var block = data.tiers[tier];
+    var items;
+    if (!block.strategies.length) {
+      items = '<li class="empty">This class is quiet. ' + esc(meta.write) + "</li>";
+    } else {
+      items = block.strategies
+        .map(function (item) {
+          return renderStrategy(tier, item);
+        })
+        .join("");
+    }
+
+    var writer;
+    if (openTier === tier) {
+      writer =
+        '<form class="composer" data-action="composer">' +
+        '<label><span class="lbl">Title</span><input class="field" data-bind="composer-title" maxlength="140" value="' +
+        esc(composer.title) +
+        '" placeholder="' +
+        esc(meta.write) +
+        '"></label>' +
+        '<label style="margin-top:0.75rem"><span class="lbl">The strategy</span><textarea class="field tall" data-bind="composer-body" placeholder="Write it plainly. Why this belongs in this class, and what it does to your life.">' +
+        esc(composer.body) +
+        "</textarea></label>" +
+        (composer.error ? '<p class="clay" style="margin-top:0.5rem;font-size:0.92rem">' + esc(composer.error) + "</p>" : "") +
+        '<div class="row"><button type="submit" class="btn btn-gold">' +
+        ICONS.plus +
+        " Save in " +
+        esc(meta.name) +
+        '</button><button type="button" class="btn btn-ghost" data-action="cancel-composer">Cancel</button></div></form>';
+    } else {
+      writer =
+        '<button type="button" class="btn btn-gold" style="margin-top:1rem" data-action="open-composer" data-tier="' +
+        tier +
+        '">' +
+        ICONS.plus +
+        " Write in " +
+        esc(meta.name) +
+        "</button>";
+    }
+
+    return (
+      '<section class="card section tier-' +
+      tier.toLowerCase() +
+      '" id="tier-' +
+      tier +
+      '"><div class="head"><span class="seal" aria-hidden="true">' +
+      tier +
+      '</span><div><div class="chips"><h2 class="display" style="font-size:1.6rem">' +
+      esc(meta.name) +
+      '</h2><span class="chip' +
+      (tier === "D" ? " clay" : "") +
+      '">' +
+      esc(meta.role) +
+      '</span><span class="mute nums" style="font-size:0.92rem">' +
+      block.strategies.length +
+      ' written</span></div><p class="creed">' +
+      ICONS[TIER_ICON[tier]] +
+      "<span>" +
+      esc(meta.creed) +
+      "</span></p></div></div>" +
+      '<label style="margin-top:1.25rem"><span class="lbl">Class note — yours to edit</span><textarea class="field" data-bind="motto-' +
+      tier +
+      '">' +
+      esc(block.motto) +
+      "</textarea></label><ul class=\"list\">" +
+      items +
+      "</ul>" +
+      writer +
+      "</section>"
+    );
+  }
+
+  function renderStrategy(tier, item) {
+    if (editingId === item.id) {
+      return (
+        '<li class="editing"><label><span class="lbl">Title</span><input class="field" data-bind="edit-title" maxlength="140" value="' +
+        esc(editDraft.title) +
+        '"></label><label style="margin-top:0.75rem"><span class="lbl">The strategy</span><textarea class="field tall" data-bind="edit-body">' +
+        esc(editDraft.body) +
+        "</textarea></label>" +
+        (editDraft.error ? '<p class="clay" style="margin-top:0.5rem;font-size:0.92rem">' + esc(editDraft.error) + "</p>" : "") +
+        '<div class="row"><button type="button" class="btn btn-gold" data-action="save-edit" data-tier="' +
+        tier +
+        '" data-id="' +
+        esc(item.id) +
+        '">Save edits</button><button type="button" class="btn btn-ghost" data-action="cancel-edit">Cancel</button></div></li>'
+      );
+    }
+
+    var remove = confirmingId === item.id
+      ? '<button type="button" class="btn btn-clay" data-action="remove" data-tier="' +
+        tier +
+        '" data-id="' +
+        esc(item.id) +
+        '">' +
+        ICONS.trash +
+        " Remove from " +
+        tier +
+        '</button><button type="button" class="btn btn-quiet" data-action="cancel-remove">Keep it</button>'
+      : '<button type="button" class="btn btn-quiet" data-action="ask-remove" data-id="' +
+        esc(item.id) +
+        '">' +
+        ICONS.trash +
+        " Remove</button>";
+
+    return (
+      '<li class="item"><h3>' +
+      esc(item.title) +
+      "</h3>" +
+      (item.body
+        ? "<p>" + esc(item.body) + "</p>"
+        : '<p class="mute">No detail yet. Edit to write the rest.</p>') +
+      '<div class="row"><button type="button" class="btn btn-quiet" data-action="edit" data-tier="' +
+      tier +
+      '" data-id="' +
+      esc(item.id) +
+      '">' +
+      ICONS.pencil +
+      " Edit</button>" +
+      remove +
+      "</div></li>"
+    );
+  }
+
+  function blessing(monthly) {
+    var name = data.goal.dedication.trim() || "dear one";
+    var bits = "";
+    for (var i = 0; i < 12; i++) bits += "<i></i>";
+    return (
+      '<div class="veil" role="dialog" aria-modal="true" aria-labelledby="blessing-title"><button type="button" class="veil-bg" aria-label="Close congratulations" data-action="close-blessing"></button><div class="dialog"><div class="confetti" aria-hidden="true">' +
+      bits +
+      '</div><div class="dialog-body"><p class="kicker">A blessing for the arrival</p><h2 id="blessing-title">Congratulations, ' +
+      esc(name) +
+      '.</h2><p class="sum nums">' +
+      esc(monthly) +
+      ' a month.</p><p class="dim" style="margin-top:1rem">You marked this amount as reached. That is not a small thing. You named a number, you sorted the paths, and you kept the one that grows you instead of the one that spends you.</p><p class="dim" style="margin-top:0.75rem">May this income come home as peace — dividends, distributions, and days that still belong to you. This ledger was kept with love and care. The summit was never the exhaustion. It was the life the capital was meant to protect.</p><div class="row"><button type="button" class="btn btn-gold" data-action="close-blessing">I receive this</button><button type="button" class="btn btn-ghost" data-action="unmark">Not yet — unmark</button></div></div></div></div>'
+    );
+  }
+
+  function render() {
+    var active = document.activeElement;
+    var bind = restoreFocus && active && active.dataset ? active.dataset.bind : "";
+    var start = bind ? active.selectionStart : null;
+    var end = bind ? active.selectionEnd : null;
+    var y = window.scrollY;
+    document.getElementById("app").innerHTML = view();
+    if (bind) {
+      var next = document.querySelector('[data-bind="' + CSS.escape(bind) + '"]');
+      if (next) {
+        next.focus();
+        if (typeof start === "number" && next.setSelectionRange) {
+          try {
+            next.setSelectionRange(start, end);
+          } catch (err) {
+            /* number inputs on some browsers */
+          }
+        }
+      }
+    }
+    restoreFocus = false;
+    window.scrollTo(0, y);
+  }
+
+  function readNumber(raw) {
+    var cleaned = String(raw).replace(/,/g, "");
+    if (!/^\d*\.?\d*$/.test(cleaned)) return null;
+    if (cleaned === "" || cleaned === ".") return 0;
+    var next = Number(cleaned);
+    if (!Number.isFinite(next) || next < 0) return null;
+    return next;
+  }
+
+  function onInput(event) {
+    var el = event.target;
+    var bind = el.dataset ? el.dataset.bind : "";
+    if (!bind) return;
+    restoreFocus = true;
+
+    if (bind === "monthly" || bind === "yield") {
+      var cleaned = String(el.value).replace(/,/g, "");
+      if (!/^\d*\.?\d*$/.test(cleaned)) {
+        el.value = numberDraft[bind] != null
+          ? numberDraft[bind]
+          : String(bind === "monthly" ? data.goal.monthlyAmount : data.goal.yieldPercent);
+        return;
+      }
+      var next = readNumber(cleaned);
+      if (next == null) return;
+      numberDraft[bind] = cleaned;
+      touch(function (draft) {
+        if (bind === "monthly") draft.goal.monthlyAmount = next;
+        else draft.goal.yieldPercent = next;
+      });
+      render();
+      return;
+    }
+
+    if (bind === "intent" || bind === "dedication") {
+      touch(function (draft) {
+        draft.goal[bind] = el.value;
+      });
+      render();
+      return;
+    }
+
+    if (bind.indexOf("motto-") === 0) {
+      var tier = bind.slice(6);
+      touch(function (draft) {
+        draft.tiers[tier].motto = el.value;
+      });
+      render();
+      return;
+    }
+
+    if (bind === "composer-title") composer.title = el.value;
+    if (bind === "composer-body") composer.body = el.value;
+    if (bind === "edit-title") editDraft.title = el.value;
+    if (bind === "edit-body") editDraft.body = el.value;
+    restoreFocus = false;
+  }
+
+  function onFocusOut(event) {
+    var el = event.target;
+    var bind = el.dataset && el.dataset.bind;
+    if (bind !== "monthly" && bind !== "yield") return;
+    if (restoreFocus) return;
+    if (numberDraft[bind] == null) return;
+    numberDraft[bind] = null;
+    var numeric = bind === "monthly" ? data.goal.monthlyAmount : data.goal.yieldPercent;
+    el.value = String(numeric);
+  }
+
+  function onChange(event) {
+    var el = event.target;
+    if (el.dataset && el.dataset.bind === "currency") {
+      touch(function (draft) {
+        draft.goal.currency = el.value;
+      });
+      render();
+      return;
+    }
+    if (el.id === "import-file" && el.files && el.files[0]) {
+      importFile(el.files[0]);
+      el.value = "";
+    }
+  }
+
+  function onSubmit(event) {
+    var form = event.target;
+    if (!form || !form.dataset || form.dataset.action !== "composer") return;
+    event.preventDefault();
+    if (!openTier) return;
+    if (!composer.title.trim()) {
+      composer.error = "Give the strategy a title.";
+      render();
+      return;
+    }
+    var tier = openTier;
+    var title = composer.title;
+    var body = composer.body;
+    touch(function (draft) {
+      var now = new Date().toISOString();
+      draft.tiers[tier].strategies.unshift({
+        id: L.newId(),
+        title: title.trim(),
+        body: body.trim(),
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    composer = { title: "", body: "", error: "" };
+    openTier = null;
+    render();
+  }
+
+  function onClick(event) {
+    var node = event.target.closest("[data-action]");
+    if (!node) return;
+    var action = node.dataset.action;
+    var tier = node.dataset.tier;
+    var id = node.dataset.id;
+
+    if (action === "toggle-achieved") {
+      var next = !data.goal.achieved;
+      touch(function (draft) {
+        draft.goal.achieved = next;
+        draft.goal.achievedAt = next ? new Date().toISOString() : null;
+      });
+      celebrate = next;
+      render();
+      return;
+    }
+    if (action === "read-blessing") {
+      celebrate = true;
+      render();
+      return;
+    }
+    if (action === "close-blessing") {
+      celebrate = false;
+      render();
+      return;
+    }
+    if (action === "unmark") {
+      touch(function (draft) {
+        draft.goal.achieved = false;
+        draft.goal.achievedAt = null;
+      });
+      celebrate = false;
+      render();
+      return;
+    }
+    if (action === "export") {
+      exportJson();
+      return;
+    }
+    if (action === "pick-import") {
+      var input = document.getElementById("import-file");
+      if (input) input.click();
+      return;
+    }
+    if (action === "ask-reset") {
+      confirmReset = true;
+      render();
+      return;
+    }
+    if (action === "cancel-reset") {
+      confirmReset = false;
+      render();
+      return;
+    }
+    if (action === "restore") {
+      data = L.seedData();
+      persist();
+      celebrate = false;
+      confirmReset = false;
+      editingId = null;
+      confirmingId = null;
+      openTier = null;
+      notice = "Starter notes restored.";
+      render();
+      return;
+    }
+    if (action === "open-composer") {
+      openTier = tier;
+      composer = { title: "", body: "", error: "" };
+      render();
+      var field = document.querySelector('[data-bind="composer-title"]');
+      if (field) field.focus();
+      return;
+    }
+    if (action === "cancel-composer") {
+      openTier = null;
+      composer = { title: "", body: "", error: "" };
+      render();
+      return;
+    }
+    if (action === "edit") {
+      var found = data.tiers[tier].strategies.find(function (item) {
+        return item.id === id;
+      });
+      if (!found) return;
+      editingId = id;
+      confirmingId = null;
+      editDraft = { title: found.title, body: found.body, error: "" };
+      render();
+      return;
+    }
+    if (action === "cancel-edit") {
+      editingId = null;
+      editDraft = { title: "", body: "", error: "" };
+      render();
+      return;
+    }
+    if (action === "save-edit") {
+      if (!editDraft.title.trim()) {
+        editDraft.error = "A strategy needs a title.";
+        render();
+        return;
+      }
+      var title = editDraft.title;
+      var body = editDraft.body;
+      touch(function (draft) {
+        var item = draft.tiers[tier].strategies.find(function (entry) {
+          return entry.id === id;
+        });
+        if (!item) return;
+        item.title = title.trim();
+        item.body = body.trim();
+        item.updatedAt = new Date().toISOString();
+      });
+      editingId = null;
+      render();
+      return;
+    }
+    if (action === "ask-remove") {
+      confirmingId = id;
+      render();
+      return;
+    }
+    if (action === "cancel-remove") {
+      confirmingId = null;
+      render();
+      return;
+    }
+    if (action === "remove") {
+      touch(function (draft) {
+        draft.tiers[tier].strategies = draft.tiers[tier].strategies.filter(function (item) {
+          return item.id !== id;
+        });
+      });
+      confirmingId = null;
+      editingId = null;
+      render();
+    }
+  }
+
+  function onKey(event) {
+    if (event.key === "Escape" && celebrate) {
+      celebrate = false;
+      render();
+    }
+  }
+
+  function exportJson() {
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "aureum-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setNotice("Backup downloaded. Keep the file somewhere you trust.");
+  }
+
+  function importFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed = L.parseBackup(String(reader.result || ""));
+      if (!parsed.ok) {
+        setNotice("That file is not an Aureum backup. Nothing was changed.");
+        return;
+      }
+      data = parsed.data;
+      persist();
+      celebrate = false;
+      editingId = null;
+      confirmingId = null;
+      openTier = null;
+      notice = "Backup restored. Your classes are back as you saved them.";
+      render();
+    };
+    reader.onerror = function () {
+      setNotice("Could not read that file. Export a fresh backup if you are unsure.");
+    };
+    reader.readAsText(file);
+  }
+
+  function boot() {
+    load();
+    document.body.addEventListener("click", onClick);
+    document.body.addEventListener("input", onInput);
+    document.body.addEventListener("change", onChange);
+    document.body.addEventListener("focusout", onFocusOut);
+    document.body.addEventListener("submit", onSubmit);
+    document.addEventListener("keydown", onKey);
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+
+  </script>
+</body>
+</html>
